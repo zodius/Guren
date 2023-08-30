@@ -14,14 +14,15 @@ import (
 	"sync"
 )
 
-type HTTPProxyRequest struct {
+type httpProxyRequest struct {
 	Host         string
 	Credential   string
 	IsHTTPS      bool
+	URI          string
 	RawReqHeader bytes.Buffer
 }
 
-func ParseRequest(reader *bufio.Reader) (req HTTPProxyRequest, err error) {
+func ParseRequest(reader *bufio.Reader) (req httpProxyRequest, err error) {
 	tp := textproto.NewReader(reader)
 
 	// First line: GET /index.html HTTP/1.0
@@ -38,7 +39,7 @@ func ParseRequest(reader *bufio.Reader) (req HTTPProxyRequest, err error) {
 
 	if method == "CONNECT" {
 		req.IsHTTPS = true
-		requestURI = "http://" + requestURI
+		requestURI = "https://" + requestURI
 	}
 
 	// get remote host
@@ -53,6 +54,7 @@ func ParseRequest(reader *bufio.Reader) (req HTTPProxyRequest, err error) {
 		return
 	}
 
+	req.URI = requestURI
 	req.Credential = mimeHeader.Get("Proxy-Authorization")
 
 	if uriInfo.Host == "" {
@@ -82,7 +84,7 @@ func parseRequestLine(line string) (method, requestURI, proto string, ok bool) {
 	return
 }
 
-func ServeProxy(proxyRequest HTTPProxyRequest, reader *bufio.Reader, conn net.Conn) {
+func ServeProxy(proxyRequest httpProxyRequest, reader *bufio.Reader, conn net.Conn) {
 	remoteConn, err := net.Dial("tcp", proxyRequest.Host)
 	if err != nil {
 		log.Println(err)

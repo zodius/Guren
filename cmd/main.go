@@ -9,12 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func SimpleAuth(credential string) bool {
-	username, password, ok := guren.ParseBasicAuth(credential)
-	if !ok {
-		return false
-	}
-	fmt.Println(username, password)
+func SimpleAuth(request guren.ProxyRequest) bool {
+	fmt.Println("user", request.ClaimUser, request.Password)
+	fmt.Println("target", request.RequestURI)
+	fmt.Println("source", request.SrcAddr)
 	return true
 }
 

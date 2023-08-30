@@ -8,6 +8,13 @@ import (
 	"github.com/zodius/guren/internal/http"
 )
 
+type ProxyRequest struct {
+	ClaimUser  string
+	Password   string
+	SrcAddr    string
+	RequestURI string
+}
+
 type Guren struct {
 	config GurenConfig
 }
@@ -55,17 +62,30 @@ func (g *Guren) httpProxy(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 
-	proxyRequest, err := http.ParseRequest(reader)
+	httpProxyRequest, err := http.ParseRequest(reader)
 	if err != nil {
 		g.config.Logger.Debug(err)
+		conn.Write([]byte("HTTP/1.1 400 Bad Request\r\n\r\n"))
 		return
 	}
 
-	if g.config.AuthFunc != nil && !g.config.AuthFunc(proxyRequest.Credential) {
+	// auth
+	username, password, ok := ParseBasicAuth(httpProxyRequest.Credential)
+	if !ok {
+		conn.Write([]byte("HTTP/1.1 400 Bad Request\r\n\r\n"))
+		return
+	}
+	proxyRequest := ProxyRequest{
+		ClaimUser:  username,
+		Password:   password,
+		SrcAddr:    conn.RemoteAddr().String(),
+		RequestURI: httpProxyRequest.URI,
+	}
+	if g.config.AuthFunc != nil && !g.config.AuthFunc(proxyRequest) {
 		g.config.Logger.Debug("Auth failed")
 		conn.Write([]byte("HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"*\"\r\n\r\n"))
 		return
 	}
 
-	http.ServeProxy(proxyRequest, reader, conn)
+	http.ServeProxy(httpProxyRequest, reader, conn)
 }

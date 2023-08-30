@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type AuthFunc func(string) bool
+type AuthFunc func(ProxyRequest) bool
 
 type GurenConfig struct {
 	Protocol    string
