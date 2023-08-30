@@ -115,17 +115,11 @@ func tunnel(brc *bufio.Reader, conn net.Conn, remoteConn net.Conn) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, err := brc.WriteTo(remoteConn)
-		if err != nil {
-			log.Println(err)
-		}
+		_, _ = brc.WriteTo(remoteConn)
 	}()
 	go func() {
 		defer wg.Done()
-		_, err := io.Copy(conn, remoteConn)
-		if err != nil {
-			log.Println(err)
-		}
+		_, _ = io.Copy(conn, remoteConn)
 	}()
 	wg.Wait()
 }

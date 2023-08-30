@@ -43,19 +43,26 @@ func (g *Guren) Start() {
 }
 
 func (g *Guren) handle(conn net.Conn) {
-	defer conn.Close()
+	if g.config.Protocol == HTTP || g.config.Protocol == HTTPS {
+		g.httpProxy(conn)
+	} else {
+		g.config.Logger.Debug("Unsupported protocol")
+	}
+}
 
+func (g *Guren) httpProxy(conn net.Conn) {
+	defer conn.Close()
 	reader := bufio.NewReader(conn)
 
 	proxyRequest, err := http.ParseRequest(reader)
 	if err != nil {
-		g.config.Logger.Error(err)
+		g.config.Logger.Debug(err)
 		return
 	}
 
-	// TODO auth
 	if g.config.AuthFunc != nil && !g.config.AuthFunc(proxyRequest.Credential) {
-		g.config.Logger.Error("Auth failed")
+		g.config.Logger.Debug("Auth failed")
+		conn.Write([]byte("HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"*\"\r\n\r\n"))
 		return
 	}
 

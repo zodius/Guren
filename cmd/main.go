@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"guren"
 
@@ -8,16 +9,26 @@ import (
 )
 
 func SimpleAuth(credential string) bool {
-	fmt.Println(credential)
+	username, password, ok := guren.ParseBasicAuth(credential)
+	if !ok {
+		return false
+	}
+	fmt.Println(username, password)
 	return true
 }
 
 func main() {
+	certificate, err := tls.LoadX509KeyPair("./certificate.pem", "./key.pem")
+	if err != nil {
+		panic(err)
+	}
+
 	config := guren.GurenConfig{
-		Protocol:   guren.HTTP,
-		ListenAddr: ":8080",
-		Logger:     logrus.New(),
-		AuthFunc:   SimpleAuth,
+		Protocol:    guren.HTTPS,
+		ListenAddr:  ":8080",
+		Logger:      logrus.New(),
+		AuthFunc:    SimpleAuth,
+		Certificate: certificate,
 	}
 
 	guren := guren.New(config)
