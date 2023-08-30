@@ -3,7 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"guren"
+
+	"github.com/zodius/guren"
 
 	"github.com/sirupsen/logrus"
 )

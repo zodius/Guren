@@ -3,8 +3,9 @@ package guren
 import (
 	"bufio"
 	"crypto/tls"
-	"guren/internal/http"
 	"net"
+
+	"github.com/zodius/guren/internal/http"
 )
 
 type Guren struct {

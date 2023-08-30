@@ -1,4 +1,4 @@
-module guren
+module github.com/zodius/guren
 
 go 1.20
 
